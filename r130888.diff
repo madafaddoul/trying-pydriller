@@ -1,7 +1,7 @@
 Index: SMSWelcome.pm
 ===================================================================
---- SMSWelcome.pm	(revision 130887)
-+++ SMSWelcome.pm	(revision 130888)
+--- SMSWelcome-before.pm	(revision 130887)
++++ SMSWelcome-after.pm	(revision 130888)
 @@ -102,7 +102,6 @@
  	$config->{COUNTRIES_FOREIGN_LANGUAGE_ABBR} = get_config_value('COUNTRIES_FOREIGN_LANGUAGE_ABBR');	# Write the language_id from RT_LANGUAGES like: 'ar','en'
  	$config->{COUNTRIES_FOREIGN_LANGUAGE} = get_value_from_db($dbh, "SELECT NAME FROM RT_LANGUAGE WHERE ID=?", $config->{COUNTRIES_FOREIGN_LANGUAGE_ABBR}) if $config->{COUNTRIES_FOREIGN_LANGUAGE_ABBR};
