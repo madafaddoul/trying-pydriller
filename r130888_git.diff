@@ -1,0 +1,132 @@
+--- a/SMSWelcome.pm
++++ b/SMSWelcome.pm
+@@ -102,7 +102,6 @@
+ 	$config->{COUNTRIES_FOREIGN_LANGUAGE_ABBR} = get_config_value('COUNTRIES_FOREIGN_LANGUAGE_ABBR');	# Write the language_id from RT_LANGUAGES like: 'ar','en'
+ 	$config->{COUNTRIES_FOREIGN_LANGUAGE} = get_value_from_db($dbh, "SELECT NAME FROM RT_LANGUAGE WHERE ID=?", $config->{COUNTRIES_FOREIGN_LANGUAGE_ABBR}) if $config->{COUNTRIES_FOREIGN_LANGUAGE_ABBR};
+ 	$config->{DEFAULT_MOBILE_NETWORK_PANE} = get_config_value('DEFAULT_MOBILE_NETWORK_PANE','countries'); 	# Possible Values: countries, operators or roaming_hub
+-	$config->{COUNTRIES_TABLE_INFO} = get_countries_columns();	
+ 
+ 
+ 	# Roamer Lookup property config
+@@ -214,6 +213,9 @@
+ 	$config->{TEMP_DOWNLOAD_FOLDER} = get_config_value('TEMP_DOWNLOAD_FOLDER', '/tmp/downloads');
+ 	$config->{stats_folder} = get_config_value('STATS_FOLDER');
+ 
++	$config->{COUNTRIES_TABLE_INFO} = get_countries_columns();	
++	$config->{OPERATORS_TABLE_INFO} = get_operator_columns();
++
+ 	#Do not add any more checks on hni for init use the following function for operator specific initializations
+ 	if (defined &operator_smswelcome_init) {
+ 		operator_smswelcome_init($dbh);
+@@ -1258,7 +1260,8 @@
+ 			foreign_language => (defined $config->{COUNTRIES_FOREIGN_LANGUAGE_ABBR} && $config->{COUNTRIES_FOREIGN_LANGUAGE_ABBR} && defined $config->{COUNTRIES_FOREIGN_LANGUAGE} && $config->{COUNTRIES_FOREIGN_LANGUAGE}) ? $config->{COUNTRIES_FOREIGN_LANGUAGE_ABBR} : 0,
+ 			prefered_operators=> $config->{prefered_operators_enabled},
+ 			info => {
+-				columns => 	get_operator_columns()
++				columns => 	$config->{OPERATORS_TABLE_INFO}->{columns},
++				sort_columns =>  $config->{OPERATORS_TABLE_INFO}->{sort_columns}
+ 			}
+ 		},
+ 		roaming_hub_pane => {
+@@ -4639,38 +4642,73 @@
+ }
+ sub get_operator_columns {
+ 
+-	return [
+-		{ID=>"HNI"},
+-		{ID=>"Country Name", WIDTH=>225},
+-		{ID=>"Operator Name", WIDTH=>250},
+-		{ID=>"Operator Name in ". $config->{COUNTRIES_FOREIGN_LANGUAGE}, WIDTH=>250},
+-		{ID=>"Preferred Operator",WIDTH=>100},
+-		{ID=>"Operator Prefixes",WIDTH=>175},
++	my $operators_table_info;
+ 
+-	]  if $config->{prefered_operators_enabled} && $config->{COUNTRIES_FOREIGN_LANGUAGE_ABBR} && $config->{COUNTRIES_FOREIGN_LANGUAGE};
++	if ($config->{prefered_operators_enabled} && $config->{COUNTRIES_FOREIGN_LANGUAGE_ABBR} && $config->{COUNTRIES_FOREIGN_LANGUAGE}){
++		$operators_table_info->{columns}=[
++			{ID=>"HNI"},
++			{ID=>"Country Name", WIDTH=>225},
++			{ID=>"Operator Name", WIDTH=>250},
++			{ID=>"Operator Name in ". $config->{COUNTRIES_FOREIGN_LANGUAGE}, WIDTH=>250},
++			{ID=>"Preferred Operator",WIDTH=>100},
++			{ID=>"Operator Prefixes",WIDTH=>175},
++		];
++		$operators_table_info->{sort_columns}={
++			"HNI"=>1,
++			"Country Name"=>1,
++			"Operator Name"=>1,
++			"Operator Name in ". $config->{COUNTRIES_FOREIGN_LANGUAGE}=>1,
++			"Preferred Operator"=>1,
++			"Operator Prefixes"=>0
++		};
++	} elsif ($config->{prefered_operators_enabled}){
++		$operators_table_info->{columns}=[
++			{ID=>"HNI"},
++			{ID=>"Country Name", WIDTH=>225},
++			{ID=>"Operator Name", WIDTH=>250},
++			{ID=>"Preferred Operator",WIDTH=>100},
++			{ID=>"Operator Prefixes",WIDTH=>175},
++		];
++		$operators_table_info->{sort_columns}={
++			"HNI"=>1,
++			"Country Name"=>1,
++			"Operator Name"=>1,
++			"Preferred Operator"=>1,
++			"Operator Prefixes"=>0
++		}
++	}elsif ($config->{COUNTRIES_FOREIGN_LANGUAGE_ABBR} && $config->{COUNTRIES_FOREIGN_LANGUAGE}){
++		$operators_table_info->{columns}=[
++			{ID=>"HNI"},
++			{ID=>"Country Name", WIDTH=>225},
++			{ID=>"Operator Name", WIDTH=>250},
++			{ID=>"Operator Name in ". $config->{COUNTRIES_FOREIGN_LANGUAGE}, WIDTH=>250},
++			{ID=>"Operator Prefixes",WIDTH=>175},
++		];
++		$operators_table_info->{sort_columns}={
++			"HNI"=>1,
++			"Country Name"=>1,
++			"Operator Name"=>1,
++			"Operator Name in ". $config->{COUNTRIES_FOREIGN_LANGUAGE}=>1,
++			"Operator Prefixes"=>0
++		};
++	}else{
++		$operators_table_info->{columns}=[
++			{ID=>"HNI"},
++			{ID=>"Country Name", WIDTH=>225},
++			{ID=>"Operator Name", WIDTH=>250},
++			{ID=>"Operator Prefixes",WIDTH=>175},
++		];
++		$operators_table_info->{sort_columns}={
++			"HNI"=>1,
++			"Country Name"=>1,
++			"Operator Name"=>1,
++			"Operator Prefixes"=>0
++		};
++	}
+ 
+-	return [
+-		{ID=>"HNI"},
+-		{ID=>"Country Name", WIDTH=>225},
+-		{ID=>"Operator Name", WIDTH=>250},
+-		{ID=>"Preferred Operator",WIDTH=>100},
+-		{ID=>"Operator Prefixes",WIDTH=>175}
+-	]  if $config->{prefered_operators_enabled};
+ 
+-	return [
+-		{ID=>"HNI"},
+-		{ID=>"Country Name", WIDTH=>225},
+-		{ID=>"Operator Name",WIDTH=>250},
+-		{ID=>"Operator Name in ". $config->{COUNTRIES_FOREIGN_LANGUAGE}, WIDTH=>250},
+-		{ID=>"Operator Prefixes",WIDTH=>175}
+-	] if $config->{COUNTRIES_FOREIGN_LANGUAGE_ABBR} && $config->{COUNTRIES_FOREIGN_LANGUAGE};
+ 
+-	return [
+-		{ID=>"HNI"},
+-		{ID=>"Country Name", WIDTH=>225},
+-		{ID=>"Operator Name",WIDTH=>250},
+-		{ID=>"Operator Prefixes",WIDTH=>175}
+-	];
++	return $operators_table_info;
+ 
+ }
+ 
